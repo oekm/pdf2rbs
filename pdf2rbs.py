@@ -4,16 +4,17 @@ import argparse
 from PyPDF2 import PdfReader
 
 def main(inputPath, filter):
-    taglist = [] #fill with tuples ("tag", "filename")
+    tagList = [] #fill with tuples ("tag", "filename")
 
     pdfList = fileFinder(inputPath, ".pdf")[1]
     
     # print(pdfList)
 
     for pdf in pdfList:
-       taglist.append(extractSubstrings(pdf, filter))
+       tagList.extend(extractSubstrings(pdf, filter))
 
-    print(taglist)
+    for tag in tagList:
+        print(tag)
     
 def extractSubstrings(filePath, filterString):
     reader = PdfReader(filePath)
