@@ -1,4 +1,3 @@
-#!/opt/homebrew/bin/python3
 import re
 import os
 import argparse
@@ -6,25 +5,33 @@ from PyPDF2 import PdfReader
 
 def main(inputPath, runMode):
     tagList = [] #fill with tuples ("tag", "filename")
-    
+
+    #compile filters
+    filterf1 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)?)?)")
+    filterf2 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)?))")
+    filterf3 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)))")
+    filterp1 = re.compile(r"(H[DESU]{1}(\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})?(?!\S))")
+    filterp2 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){0,3}(?!\S))")
+    filterp3 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)))")
+
     #determine regex filter based on runmode
     match runMode:
         case "f1":
-            filter = "https?://[a-z./]+"
+            filter = filterf1
         case "f2":
-            filter = "https?://[a-z./]+"
+            filter = filterf2
         case "f3":
-            filter = "https?://[a-z./]+"
+            filter = filterf3
         case "p1":
-            filter = "https?://[a-z./]+"
+            filter = filterp1
         case "p2":
-            filter = "https?://[a-z./]+"
+            filter = filterp2
         case "p3":
-            filter = "https?://[a-z./]+"
+            filter = filterp3
         case _:
             if runVerbose:
                 print("no runMode selected")
-            filter = "https?://[a-z./]+"
+            filter = filterf3
              
     #get list of pdfs from inputPath
     pdfList = fileFinder(inputPath, ".pdf")[1]
@@ -37,23 +44,32 @@ def main(inputPath, runMode):
     for tag in tagList:
         print(tag)
     
-def extractSubstrings(filePath, filterString):
+def extractSubstrings(filePath, searchPattern):
     reader = PdfReader(filePath)
     numberOfPages = len(reader.pages)
     allText = ""
     if runVerbose:
-        print("File: "+filePath+" Filter: "+filterString)
+        print("File: "+filePath)
     for i in range (0, numberOfPages):
         page = reader.pages[i]
         if runVerbose:
             print("Page "+str(i+1)+"/"+str(numberOfPages)+"...")
         allText += page.extract_text()
-    allTextNoSpaces = re.sub("\s+","", allText)
 
-    matchList = re.findall(filterString, allTextNoSpaces)
+    cleanText = re.sub(r"\s*\.\s*", r".", allText)
+    if runVerbose:
+        print("allText length: "+str(len(allText)))
+        print(cleanText)
+
+    matchList = searchPattern.findall(cleanText)
+
+    if runVerbose:
+        print("Matchlist length: "+str(len(matchList)))
+    
+
     tupleList = []
     for i in range (0, len(matchList)):
-        tupleList.append((matchList[i],filePath))
+        tupleList.append((matchList[i][0],filePath))
     return tupleList
 
 def fileFinder(dir, ext):
@@ -92,7 +108,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     #set runmode based on f/p value
-    runMode = "f3" #default
+    runMode = "" #default
     if args.funktion == 1:
         runMode = "f1"
     if args.funktion == 2:
