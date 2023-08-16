@@ -1,18 +1,20 @@
 import re
 import os
+import csv
 import argparse
 from PyPDF2 import PdfReader
 
 def main(inputPath, runMode):
     tagList = [] #fill with tuples ("tag", "filename")
+    #inputPath = os.path.abspath(inputPath)
 
     #compile filters
     filterf1 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)?)?)")
     filterf2 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)?))")
     filterf3 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)))")
-    filterp1 = re.compile(r"(H[DESU]{1}(\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})?(?!\S))")
-    filterp2 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){0,3}(?!\S))")
-    filterp3 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)))")
+    filterp1 = re.compile(r"(H[DESU]{1}(\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})?)")
+    filterp2 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})")
+    filterp3 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){1,3})")
 
     #determine regex filter based on runmode
     match runMode:
@@ -43,9 +45,14 @@ def main(inputPath, runMode):
     #output each tag-file pair from tagList
     for tag in tagList:
         print(tag)
-    
+
+    # with open(workDirPath, 'w') as outputFile:
+    #     writer = csv.writer(outputFile)
+    #print(workDirPath)
+
+
 def extractSubstrings(filePath, searchPattern):
-    reader = PdfReader(filePath)
+    reader = PdfReader(filePath, strict=0)
     numberOfPages = len(reader.pages)
     allText = ""
     if runVerbose:
