@@ -15,6 +15,7 @@ def main(inputPath, runMode):
     filterp1 = re.compile(r"(H[DESU]{1}(\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})?)")
     filterp2 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})")
     filterp3 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){1,3})")
+    nofilter = re.compile(r"(.*)")
 
     #determine regex filter based on runmode
     match runMode:
@@ -33,7 +34,7 @@ def main(inputPath, runMode):
         case _:
             if runVerbose:
                 print("no runMode selected")
-            filter = filterf3
+            filter = nofilter
              
     #get list of pdfs from inputPath
     pdfList = fileFinder(inputPath, ".pdf")[1]
@@ -44,7 +45,7 @@ def main(inputPath, runMode):
 
     #output each tag-file pair from tagList
     for tag in tagList:
-        print(tag)
+        print(tag[0]+"\t"+tag[1])
 
     # with open(workDirPath, 'w') as outputFile:
     #     writer = csv.writer(outputFile)
@@ -63,7 +64,8 @@ def extractSubstrings(filePath, searchPattern):
             print("Page "+str(i+1)+"/"+str(numberOfPages)+"...")
         allText += page.extract_text()
 
-    cleanText = re.sub(r"\s*\.\s*", r".", allText)
+    #remove whitespace before and after ./_ to merge broken tags
+    cleanText = re.sub(r"\s*(\.|\_)\s*", r"\1", allText)
     if runVerbose:
         print("allText length: "+str(len(allText)))
         print(cleanText)
@@ -73,10 +75,11 @@ def extractSubstrings(filePath, searchPattern):
     if runVerbose:
         print("Matchlist length: "+str(len(matchList)))
     
+    leaf = os.path.basename(filePath)
 
     tupleList = []
     for i in range (0, len(matchList)):
-        tupleList.append((matchList[i][0],filePath))
+        tupleList.append((matchList[i][0],leaf))
     return tupleList
 
 def fileFinder(dir, ext):
