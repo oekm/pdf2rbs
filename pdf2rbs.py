@@ -64,6 +64,16 @@ def extractSubstrings(filePath, searchPattern):
             print("Page "+str(i+1)+"/"+str(numberOfPages)+"...")
         allText += page.extract_text()
 
+        try:
+            for annot in page['/Annots']:
+                obj=annot.get_object()
+                if 'AutoCAD SHX Text' in obj.values():
+                    #print (obj['/Contents'],obj['/Rect'])
+                    allText += (obj['/Contents'])
+        except:
+            print("No annotations in file")
+
+
     #remove whitespace before and after ./_ to merge broken tags
     cleanText = re.sub(r"\s*(\.|\_)\s*", r"\1", allText)
     if runVerbose:
@@ -77,6 +87,7 @@ def extractSubstrings(filePath, searchPattern):
     
     leaf = os.path.basename(filePath)
 
+    #populate output array with text matchlist
     tupleList = []
     for i in range (0, len(matchList)):
         tupleList.append((matchList[i][0],leaf))
