@@ -12,9 +12,13 @@ def main(inputPath, runMode):
     filterf1 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)?)?)")
     filterf2 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)?))")
     filterf3 = re.compile(r"(([A-Z]{2})((\.[A-Z]{2}[A-Z0-9]{2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)))")
-    filterp1 = re.compile(r"(H[DESU]{1}(\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})?)")
-    filterp2 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})")
-    filterp3 = re.compile(r"(H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){1,3})")
+    filterf4 = re.compile(r"((\.*QM[0-9]{2,4}))")
+    filterf5 = re.compile(r"((A[A-Z]{1})((\.[A-Z\.]{1,5}[A-Z0-9]{0,2})((\.[A-Z]{2}(([1-9][0-9]{2,3})|([0-9]{2}))){1,3}(_[A-Z]{2}[0-9]{2})?)))")
+    filterp1 = re.compile(r"((H[DESU]{1}(\.[A-D][0-9]{2}(\.[0-9]{2}){0,3})?))")
+    filterp2 = re.compile(r"((H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){0,3}))")
+    filterp3 = re.compile(r"((H[DESU]{1}\.[A-D][0-9]{2}(\.[0-9]{2}){1,3}))")
+
+    
     nofilter = re.compile(r"(.*)")
 
     #determine regex filter based on runmode
@@ -25,6 +29,10 @@ def main(inputPath, runMode):
             filter = filterf2
         case "f3":
             filter = filterf3
+        case "f4":
+            filter = filterf4
+        case "f5":
+            filter = filterf5
         case "p1":
             filter = filterp1
         case "p2":
@@ -51,6 +59,31 @@ def main(inputPath, runMode):
     #     writer = csv.writer(outputFile)
     #print(workDirPath)
 
+def fileFinder(dir, ext):
+    subfolders = []
+    files = [] 
+    
+    #case 1: inputPath is a pdf
+    if os.path.isfile(dir):
+        if os.path.splitext(dir)[-1].lower() == ext:
+            files.append(os.path.normpath(dir))
+
+    #case 2: inputPath is a directory
+    if os.path.isdir(dir):
+         #separate subfolders and files in current wd
+        for f in os.scandir(dir):
+            if f.is_dir():
+                subfolders.append(f.path)
+            if f.is_file():
+                if os.path.splitext(f.name)[-1].lower() == ext:
+                    files.append(f.path)
+        #recurse into subfolders, append lists
+        for subfolder in list(subfolders):
+            sf, f  = fileFinder(subfolder, ext) 
+            subfolders.extend(sf)
+            files.extend(f)
+    #returning sf for recursion, call with [1] if only files needed
+    return subfolders, files
 
 def extractSubstrings(filePath, searchPattern):
     reader = PdfReader(filePath, strict=0)
@@ -84,7 +117,6 @@ def extractSubstrings(filePath, searchPattern):
 
     if runVerbose:
         print("Matchlist length: "+str(len(matchList)))
-    
     leaf = os.path.basename(filePath)
 
     #populate output array with text matchlist
@@ -93,38 +125,12 @@ def extractSubstrings(filePath, searchPattern):
         tupleList.append((matchList[i][0],leaf))
     return tupleList
 
-def fileFinder(dir, ext):
-    subfolders = []
-    files = [] 
-    
-    #case 1: inputPath is a pdf
-    if os.path.isfile(dir):
-        if os.path.splitext(dir)[-1].lower() == ext:
-            files.append(os.path.normpath(dir))
-
-    #case 2: inputPath is a directory
-    if os.path.isdir(dir):
-         #separate subfolders and files in current wd
-        for f in os.scandir(dir):
-            if f.is_dir():
-                subfolders.append(f.path)
-            if f.is_file():
-                if os.path.splitext(f.name)[-1].lower() == ext:
-                    files.append(f.path)
-        #recurse into subfolders, append lists
-        for subfolder in list(subfolders):
-            sf, f  = fileFinder(subfolder, ext) 
-            subfolders.extend(sf)
-            files.extend(f)
-    #returning sf for recursion, call with [1] if only files needed
-    return subfolders, files
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="Verbose output", action="store_true")
     parser.add_argument("-i", "--inputPath", help="Path to file or folder", default="./")
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("-f", "--funktion", help="Extrahera funktionsbeteckningar med minst n (1-3) nivåer", type=int, choices={1,2,3})
+    mode.add_argument("-f", "--funktion", help="Extrahera funktionsbeteckningar med minst n (1-3) nivåer", type=int, choices={1,2,3,4,5})
     mode.add_argument("-p", "--placering", help="Extrahera placeringsbeteckningar med minst n (1-3) nivåer", type=int, choices={1,2,3})
     args = parser.parse_args()
     
@@ -136,6 +142,10 @@ if __name__ == "__main__":
         runMode = "f2"
     if args.funktion == 3:
         runMode = "f3"
+    if args.funktion == 4:
+        runMode = "f4"
+    if args.funktion == 5:
+        runMode = "f5"
     if args.placering == 1:
         runMode = "p1"
     if args.placering == 2:
