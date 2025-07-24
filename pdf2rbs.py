@@ -39,10 +39,10 @@ def main(inputPath, runMode):
             filter = filterp2
         case "p3":
             filter = filterp3
-        case _:
-            if runVerbose:
-                print("no runMode selected")
+        case "nf":
             filter = nofilter
+        case _:
+            filter = filterf3
              
     #get list of pdfs from inputPath
     pdfList = fileFinder(inputPath, ".pdf")[1]
@@ -104,7 +104,10 @@ def extractSubstrings(filePath, searchPattern):
                     #print (obj['/Contents'],obj['/Rect'])
                     allText += (obj['/Contents'])
         except:
-            print("No annotations in file")
+            if runVerbose:
+                print("No annotations in file")
+            else:
+                pass
 
 
     #remove whitespace before and after ./_ to merge broken tags
@@ -135,7 +138,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     #set runmode based on f/p value
-    runMode = "" #default
+    runMode = "f3" #default
     if args.funktion == 1:
         runMode = "f1"
     if args.funktion == 2:
@@ -152,6 +155,8 @@ if __name__ == "__main__":
         runMode = "p2"
     if args.placering == 3:
         runMode = "p3"
+    if args.funktion == 0:
+        runmode = "nf"
 
     runVerbose = 0
     if args.verbose:

@@ -9,6 +9,9 @@ class Reference:
         self.source = source
         self.type = type
 
+    def __lt__(self,other):
+        return self.reference < other.reference
+    
 class Document: 
     def __init__(self,name,path):
         self.name = name
@@ -17,38 +20,60 @@ class Document:
         self.loc_ref_list = []
         self.doc_ref_list = []
 
-
+    def __str__(self):
+        return('Name: ' + str(self.name) + ', Path: ' + str(self.path))
 
 def main_menu():
-    path = ""
+    path = '' 
     while True: 
-        print("1. Välj mapp/fil att scanna. Nuvarande val:", path)
-        print("2. Scanna")
-        print("3. Avsluta")
-        choice = input("Väl något av alternativen ovan: ")
-        if choice == "1":
+        print('\n1. Välj mapp att scanna. Nuvarande val:', path)
+        print('2. Scanna')
+        print('3. Avsluta')
+        choice = input('Väl något av alternativen ovan: ')
+        if choice == '1':
             path = file_picker()
-        elif choice == "2":
-            init_scan(path)
-        elif choice == "3":
+        elif choice == '2':
+            main_function(path)
+        elif choice == '3':
             break
         else:
-            print("Inte ett val, försök igen.")
+            print('Inte ett val, försök igen.')
 
-def path_menu():
-    path_input = input("Ange en sökväg: ")
-    if os.path.exists(path_input):
-        print("Path:", path_input)
-        return path_input
-    else:
-        print("Ogiltig sökväg")
+def main_function(path):
+    files = scan_tree(path)
+    doclist = []
+    for file in files:
+        doclist.append(make_document(file))
+    for doc in doclist:
+        print(doc)
 
 def file_picker():
-    return filedialog.askdirectory()
+    path = filedialog.askdirectory()
+    print(type(path))
+    return path
 
-def init_scan(path):
+def scan_tree(path):
+    '''Tar en sökväg till en mapp och returnerar lista med filer
+    Indata: path (string)
+    Returvärde: lista av DirEntry-objekt (list)
+    '''
+    file_list = []
     if os.path.isdir(path):
         for file in os.scandir(path):
-            print(file.path)
+            if os.path.isdir(file):
+                file_list += scan_tree(file)
+            else:
+                file_list.append(file)
+    return file_list
 
-main_menu()
+def make_document(dir_entry):
+    return Document(dir_entry.name,dir_entry.path)
+        
+def scan_file(file):
+    pass
+
+def scan_document(doc):
+    pass
+
+#main_menu()
+main_function('C:/Users/ae62922/HCP/Documents/Dokumentmall')
